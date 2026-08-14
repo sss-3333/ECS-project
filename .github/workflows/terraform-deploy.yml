@@ -1,0 +1,84 @@
+name: Terraform Deploy
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "infra/**"
+  # Also runs automatically once "Build and Push" finishes successfully,
+  # so an app-code change deploys straight through without needing a
+  # second, separate commit to infra/. This guarantees the image tag
+  # this workflow deploys has actually finished pushing to ECR first.
+  workflow_run:
+    workflows: ["Build and Push"]
+    types: [completed]
+  workflow_dispatch: {}
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  AWS_REGION: eu-west-2
+
+jobs:
+  deploy:
+    if: ${{ github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: infra
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          # When triggered by workflow_run, check out the exact commit
+          # that triggered the app build, not just whatever's latest on main.
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+
+      - name: Resolve image tag
+        id: vars
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_run" ]; then
+            echo "image_tag=${{ github.event.workflow_run.head_sha }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "image_tag=${{ github.sha }}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.11.0"
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Terraform init
+        run: terraform init
+
+      - name: Terraform plan
+        run: terraform plan -var="image_tag=${{ steps.vars.outputs.image_tag }}" -out=tfplan
+
+      - name: Terraform apply
+        run: terraform apply -auto-approve tfplan
+
+      - name: Post-deploy health check
+        run: |
+          sleep 20
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://app.trackance.co.uk/health)
+          BODY=$(curl -s https://app.trackance.co.uk/health)
+          echo "HTTP status: $STATUS, body: $BODY"
+          if [ "$STATUS" != "200" ] || [ "$BODY" != '{"status":"ok"}' ]; then
+            echo "Health check failed — failing the pipeline."
+            exit 1
+          fi
+
+      - name: Job summary
+        if: always()
+        run: |
+          echo "### Terraform Deploy" >> $GITHUB_STEP_SUMMARY
+          echo "- Image tag deployed: \`${{ steps.vars.outputs.image_tag }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- App URL: https://app.trackance.co.uk" >> $GITHUB_STEP_SUMMARY

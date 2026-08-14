@@ -1,0 +1,18 @@
+[
+  {
+    "id": "seed-1",
+    "name": "Portfolio site refresh",
+    "client": "Self",
+    "status": "In Progress",
+    "nextAction": "Finish about page",
+    "createdAt": "2026-08-01T09:00:00.000Z"
+  },
+  {
+    "id": "seed-2",
+    "name": "Internal ops dashboard",
+    "client": "Acme Co",
+    "status": "Waiting on Client",
+    "nextAction": "Chase feedback on wireframes",
+    "createdAt": "2026-08-05T09:00:00.000Z"
+  }
+]
