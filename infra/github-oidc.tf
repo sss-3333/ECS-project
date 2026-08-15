@@ -17,8 +17,12 @@ resource "aws_iam_openid_connect_provider" "github" {
 # not any GitHub repo in the world.
 data "aws_iam_policy_document" "github_actions_trust" {
   statement {
-    effect  = "Allow"
-    actions = ["sts:AssumeRoleWithWebIdentity"]
+    effect = "Allow"
+    # TagSession is required alongside AssumeRoleWithWebIdentity because
+    # aws-actions/configure-aws-credentials@v4 attaches session tags
+    # (repo, branch, actor, etc.) to every OIDC assume-role call by
+    # default — without this, AWS rejects the whole call.
+    actions = ["sts:AssumeRoleWithWebIdentity", "sts:TagSession"]
 
     principals {
       type        = "Federated"
