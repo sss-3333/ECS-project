@@ -1,15 +1,12 @@
-// server.js
 const express = require('express');
+const path = require('path');
 const store = require('./store');
 
 const app = express();
 app.use(express.json());
 
-// Internally the app listens on PORT (default 3000). It gets exposed
-// externally as port 80 via Docker's port mapping (-p 80:3000) and later
-// via the ALB — this lets the container run as a non-root user (Step 2
-// requirement), since non-root processes generally can't bind to ports
-// below 1024 directly.
+app.use(express.static(path.join(__dirname, 'public')));
+
 const PORT = process.env.PORT || 3000;
 
 const VALID_STATUSES = [
@@ -19,8 +16,6 @@ const VALID_STATUSES = [
   'Done',
 ];
 
-// Required health check — infrastructure (Docker/ECS/ALB) pings this to
-// confirm the app is alive. Must return exactly this shape.
 app.get('/health', (req, res) => {
   res.status(200).json({ status: 'ok' });
 });

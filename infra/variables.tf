@@ -45,18 +45,6 @@ variable "public_subnet_cidrs" {
   default     = ["10.0.1.0/24", "10.0.2.0/24"]
 }
 
-variable "github_org" {
-  description = "GitHub username/org that owns the repo, for OIDC trust scoping"
-  type        = string
-  default     = "sss-3333"
-}
-
-variable "github_repo" {
-  description = "GitHub repo name, for OIDC trust scoping"
-  type        = string
-  default     = "ECS-project"
-}
-
 variable "availability_zones" {
   description = "AZs to spread public subnets across"
   type        = list(string)

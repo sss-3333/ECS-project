@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Trackance — Client Project Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #F7F3F6;
+    --bg-deep: #F1E9EF;
+    --card: #FFFDFC;
+    --ink: #2E1F2E;
+    --ink-soft: #6B5A68;
+    --velvet: #4A2545;
+    --velvet-light: #6B3A66;
+    --rose: #C98CA7;
+    --gold: #C9A15A;
+    --sage: #8FA68E;
+    --grey: #A79AA5;
+    --line: #E9DEE6;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    font-family: 'Inter', sans-serif;
+    color: var(--ink);
+    background: radial-gradient(ellipse 120% 80% at 50% -10%, var(--bg-deep), var(--bg));
+    padding: 64px 24px 100px;
+  }
+
+  .wrap { max-width: 720px; margin: 0 auto; }
+
+  header { margin-bottom: 48px; }
+
+  h1 {
+    font-family: 'Fraunces', serif;
+    font-weight: 600;
+    font-size: clamp(2.2rem, 5vw, 3rem);
+    letter-spacing: -0.02em;
+    margin: 0 0 8px;
+    color: var(--velvet);
+  }
+
+  .tagline {
+    color: var(--ink-soft);
+    font-size: 1rem;
+    margin: 0;
+  }
+
+  .panel {
+    background: var(--card);
+    border-radius: 20px;
+    box-shadow:
+      0 1px 2px rgba(74, 37, 69, 0.06),
+      0 8px 24px rgba(74, 37, 69, 0.07),
+      inset 0 1px 0 rgba(255,255,255,0.6);
+    padding: 28px;
+    margin-bottom: 24px;
+  }
+
+  form { display: flex; flex-wrap: wrap; gap: 12px; }
+
+  input {
+    font-family: 'Inter', sans-serif;
+    font-size: 0.95rem;
+    padding: 12px 16px;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    background: var(--bg);
+    color: var(--ink);
+    flex: 1 1 160px;
+    outline: none;
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+
+  input::placeholder { color: var(--grey); }
+
+  input:focus {
+    border-color: var(--velvet-light);
+    box-shadow: 0 0 0 3px rgba(74, 37, 69, 0.12);
+  }
+
+  button {
+    font-family: 'Inter', sans-serif;
+    font-weight: 600;
+    font-size: 0.9rem;
+    padding: 12px 22px;
+    border: none;
+    border-radius: 12px;
+    background: linear-gradient(160deg, var(--velvet-light), var(--velvet));
+    color: #F7F3F6;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(74, 37, 69, 0.28);
+    transition: transform 0.12s, box-shadow 0.12s;
+  }
+
+  button:hover { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(74, 37, 69, 0.34); }
+  button:active { transform: translateY(0); }
+  button:focus-visible, input:focus-visible, select:focus-visible {
+    outline: 2px solid var(--velvet-light);
+    outline-offset: 2px;
+  }
+
+  .eyebrow {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    margin: 0 0 14px;
+  }
+
+  .cards { display: flex; flex-direction: column; gap: 14px; }
+
+  .card {
+    position: relative;
+    background: var(--card);
+    border-radius: 16px;
+    padding: 20px 22px 20px 28px;
+    box-shadow:
+      0 1px 2px rgba(74, 37, 69, 0.05),
+      0 6px 18px rgba(74, 37, 69, 0.06);
+    overflow: hidden;
+  }
+
+  .card::before {
+    content: "";
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 6px;
+    border-radius: 6px 0 0 6px;
+  }
+
+  .card[data-status="Not Started"]::before { background: linear-gradient(180deg, var(--grey), #8d8092); }
+  .card[data-status="In Progress"]::before { background: linear-gradient(180deg, var(--gold), #b08a3e); }
+  .card[data-status="Waiting on Client"]::before { background: linear-gradient(180deg, var(--rose), #b3708f); }
+  .card[data-status="Done"]::before { background: linear-gradient(180deg, var(--sage), #718c70); }
+
+  .card-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 6px;
+  }
+
+  .card-name {
+    font-family: 'Fraunces', serif;
+    font-weight: 500;
+    font-size: 1.15rem;
+    color: var(--ink);
+  }
+
+  .card-meta {
+    font-size: 0.88rem;
+    color: var(--ink-soft);
+    margin: 0 0 12px;
+  }
+
+  select {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.72rem;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    padding: 7px 10px;
+    border-radius: 20px;
+    border: 1px solid var(--line);
+    background: var(--bg);
+    color: var(--velvet);
+    cursor: pointer;
+  }
+
+  .empty {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--ink-soft);
+    font-size: 0.95rem;
+  }
+
+  .toast {
+    position: fixed;
+    bottom: 28px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: var(--velvet);
+    color: #F7F3F6;
+    padding: 12px 22px;
+    border-radius: 12px;
+    font-size: 0.88rem;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s, transform 0.25s;
+    box-shadow: 0 8px 24px rgba(74,37,69,0.3);
+  }
+
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; }
+  }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <h1>Trackance</h1>
+      <p class="tagline">A place to keep every client project in view.</p>
+    </header>
+
+    <div class="panel">
+      <p class="eyebrow">New project</p>
+      <form id="add-form">
+        <input type="text" id="name" placeholder="Project name" required>
+        <input type="text" id="client" placeholder="Client" required>
+        <input type="text" id="nextAction" placeholder="Next action (optional)">
+        <button type="submit">Add project</button>
+      </form>
+    </div>
+
+    <p class="eyebrow" id="list-label">Projects</p>
+    <div class="cards" id="cards"></div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+<script>
+  const STATUSES = ["Not Started", "In Progress", "Waiting on Client", "Done"];
+  const cardsEl = document.getElementById('cards');
+  const toastEl = document.getElementById('toast');
+
+  function showToast(msg) {
+    toastEl.textContent = msg;
+    toastEl.classList.add('show');
+    setTimeout(() => toastEl.classList.remove('show'), 2200);
+  }
+
+  function renderCard(p) {
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.dataset.status = p.status;
+
+    const options = STATUSES.map(s =>
+      `<option value="${s}" ${s === p.status ? 'selected' : ''}>${s}</option>`
+    ).join('');
+
+    card.innerHTML = `
+      <div class="card-top">
+        <span class="card-name">${escapeHtml(p.name)}</span>
+        <select data-id="${p.id}">${options}</select>
+      </div>
+      <p class="card-meta">${escapeHtml(p.client)}${p.nextAction ? ' · ' + escapeHtml(p.nextAction) : ''}</p>
+    `;
+    return card;
+  }
+
+  function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str || '';
+    return div.innerHTML;
+  }
+
+  async function loadProjects() {
+    const res = await fetch('/projects');
+    const projects = await res.json();
+    cardsEl.innerHTML = '';
+    if (projects.length === 0) {
+      cardsEl.innerHTML = '<div class="empty">No projects yet — add your first one above.</div>';
+      return;
+    }
+    projects.forEach(p => cardsEl.appendChild(renderCard(p)));
+  }
+
+  document.getElementById('add-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const name = document.getElementById('name').value.trim();
+    const client = document.getElementById('client').value.trim();
+    const nextAction = document.getElementById('nextAction').value.trim();
+
+    const res = await fetch('/projects', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, client, nextAction })
+    });
+
+    if (res.ok) {
+      e.target.reset();
+      showToast('Project added');
+      loadProjects();
+    } else {
+      const err = await res.json();
+      showToast(err.error || 'Something went wrong');
+    }
+  });
+
+  cardsEl.addEventListener('change', async (e) => {
+    if (e.target.tagName !== 'SELECT') return;
+    const id = e.target.dataset.id;
+    const status = e.target.value;
+
+    const res = await fetch(`/projects/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status })
+    });
+
+    if (res.ok) {
+      showToast('Status updated');
+      loadProjects();
+    } else {
+      showToast('Could not update status');
+    }
+  });
+
+  loadProjects();
+</script>
+</body>
+</html>
