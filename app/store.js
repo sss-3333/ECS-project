@@ -44,13 +44,27 @@ function addProject({ name, client, status, nextAction }) {
   return project;
 }
 
-function updateStatus(id, status) {
+function updateProject(id, updates) {
   const projects = load();
   const project = projects.find((p) => p.id === id);
   if (!project) return null;
-  project.status = status;
+
+  if (updates.name !== undefined) project.name = updates.name;
+  if (updates.client !== undefined) project.client = updates.client;
+  if (updates.nextAction !== undefined) project.nextAction = updates.nextAction;
+  if (updates.status !== undefined) project.status = updates.status;
+
   save(projects);
   return project;
 }
 
-module.exports = { getAll, addProject, updateStatus };
+function deleteProject(id) {
+  const projects = load();
+  const index = projects.findIndex((p) => p.id === id);
+  if (index === -1) return false;
+  projects.splice(index, 1);
+  save(projects);
+  return true;
+}
+
+module.exports = { getAll, addProject, updateProject, deleteProject };

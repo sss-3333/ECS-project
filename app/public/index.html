@@ -176,6 +176,56 @@
     cursor: pointer;
   }
 
+  .icon-btn {
+    background: none;
+    border: none;
+    box-shadow: none;
+    color: var(--ink-soft);
+    font-size: 0.95rem;
+    padding: 6px 8px;
+    cursor: pointer;
+    border-radius: 8px;
+    line-height: 1;
+  }
+
+  .icon-btn:hover { background: var(--bg); color: var(--velvet); transform: none; box-shadow: none; }
+
+  .card-actions { display: flex; align-items: center; }
+
+  .edit-field {
+    font-family: 'Inter', sans-serif;
+    font-size: 0.9rem;
+    padding: 8px 10px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: var(--bg);
+    color: var(--ink);
+    width: 100%;
+    outline: none;
+    margin-bottom: 8px;
+  }
+
+  .edit-field:focus {
+    border-color: var(--velvet-light);
+    box-shadow: 0 0 0 3px rgba(74, 37, 69, 0.12);
+  }
+
+  .edit-actions { display: flex; gap: 8px; margin-top: 4px; }
+
+  .btn-small {
+    font-size: 0.8rem;
+    padding: 8px 16px;
+    border-radius: 10px;
+  }
+
+  .btn-cancel {
+    background: var(--bg);
+    color: var(--ink-soft);
+    box-shadow: none;
+  }
+
+  .btn-cancel:hover { box-shadow: none; background: var(--line); }
+
   .empty {
     text-align: center;
     padding: 40px 20px;
@@ -210,7 +260,7 @@
   <div class="wrap">
     <header>
       <h1>Trackance</h1>
-      <p class="tagline">A place to keep every client project in view</p>
+      <p class="tagline">A calm place to keep every client project in view.</p>
     </header>
 
     <div class="panel">
@@ -244,7 +294,12 @@
     const card = document.createElement('div');
     card.className = 'card';
     card.dataset.status = p.status;
+    card.dataset.id = p.id;
+    renderViewMode(card, p);
+    return card;
+  }
 
+  function renderViewMode(card, p) {
     const options = STATUSES.map(s =>
       `<option value="${s}" ${s === p.status ? 'selected' : ''}>${s}</option>`
     ).join('');
@@ -252,11 +307,26 @@
     card.innerHTML = `
       <div class="card-top">
         <span class="card-name">${escapeHtml(p.name)}</span>
-        <select data-id="${p.id}">${options}</select>
+        <div class="card-actions">
+          <select data-id="${p.id}">${options}</select>
+          <button class="icon-btn edit-btn" data-id="${p.id}" title="Edit" aria-label="Edit project">✎</button>
+          <button class="icon-btn delete-btn" data-id="${p.id}" title="Delete" aria-label="Delete project">✕</button>
+        </div>
       </div>
       <p class="card-meta">${escapeHtml(p.client)}${p.nextAction ? ' · ' + escapeHtml(p.nextAction) : ''}</p>
     `;
-    return card;
+  }
+
+  function renderEditMode(card, p) {
+    card.innerHTML = `
+      <input class="edit-field" data-field="name" value="${escapeAttr(p.name)}" placeholder="Project name">
+      <input class="edit-field" data-field="client" value="${escapeAttr(p.client)}" placeholder="Client">
+      <input class="edit-field" data-field="nextAction" value="${escapeAttr(p.nextAction || '')}" placeholder="Next action">
+      <div class="edit-actions">
+        <button class="btn-small save-btn" data-id="${p.id}">Save</button>
+        <button class="btn-small btn-cancel cancel-btn" data-id="${p.id}">Cancel</button>
+      </div>
+    `;
   }
 
   function escapeHtml(str) {
@@ -265,9 +335,16 @@
     return div.innerHTML;
   }
 
+  function escapeAttr(str) {
+    return (str || '').replace(/"/g, '&quot;');
+  }
+
+  let projectsCache = [];
+
   async function loadProjects() {
     const res = await fetch('/projects');
     const projects = await res.json();
+    projectsCache = projects;
     cardsEl.innerHTML = '';
     if (projects.length === 0) {
       cardsEl.innerHTML = '<div class="empty">No projects yet — add your first one above.</div>';
@@ -314,6 +391,60 @@
       loadProjects();
     } else {
       showToast('Could not update status');
+    }
+  });
+
+  cardsEl.addEventListener('click', async (e) => {
+    const target = e.target;
+    const card = target.closest('.card');
+    if (!card) return;
+    const id = target.dataset.id;
+
+    if (target.classList.contains('edit-btn')) {
+      const project = projectsCache.find(p => p.id === id);
+      if (project) renderEditMode(card, project);
+      return;
+    }
+
+    if (target.classList.contains('cancel-btn')) {
+      const project = projectsCache.find(p => p.id === id);
+      if (project) renderViewMode(card, project);
+      return;
+    }
+
+    if (target.classList.contains('save-btn')) {
+      const name = card.querySelector('[data-field="name"]').value.trim();
+      const client = card.querySelector('[data-field="client"]').value.trim();
+      const nextAction = card.querySelector('[data-field="nextAction"]').value.trim();
+
+      const res = await fetch(`/projects/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, client, nextAction })
+      });
+
+      if (res.ok) {
+        showToast('Project updated');
+        loadProjects();
+      } else {
+        const err = await res.json();
+        showToast(err.error || 'Could not update project');
+      }
+      return;
+    }
+
+    if (target.classList.contains('delete-btn')) {
+      const project = projectsCache.find(p => p.id === id);
+      if (!project) return;
+      if (!confirm(`Delete "${project.name}"? This can't be undone.`)) return;
+
+      const res = await fetch(`/projects/${id}`, { method: 'DELETE' });
+      if (res.status === 204) {
+        showToast('Project deleted');
+        loadProjects();
+      } else {
+        showToast('Could not delete project');
+      }
     }
   });
 
