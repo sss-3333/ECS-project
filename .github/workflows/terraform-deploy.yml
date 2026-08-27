@@ -1,6 +1,10 @@
 name: Terraform Deploy
 
 on:
+  push:
+    branches: [main]
+    paths:
+      - "infra/**"
   workflow_run:
     workflows: ["Build and Push"]
     types: [completed]
