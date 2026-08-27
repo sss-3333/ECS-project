@@ -4,10 +4,6 @@ resource "aws_ecs_cluster" "this" {
   name = "${var.project_name}-cluster"
 }
 
-# Task-level security group: only accepts traffic from the ALB's
-# security group on the container port — not from anywhere else. This
-# is the tightened version of the rule you added by hand in ClickOps
-# (which allowed the port more broadly).
 resource "aws_security_group" "ecs_task" {
   name        = "${var.project_name}-ecs-task-sg"
   description = "Allows inbound traffic from the ALB only"
@@ -33,9 +29,6 @@ resource "aws_security_group" "ecs_task" {
   }
 }
 
-# The execution role is what lets ECS itself pull your image from ECR
-# and ship container logs to CloudWatch — it's AWS acting on your
-# behalf to start the container, not your app's own permissions.
 resource "aws_iam_role" "ecs_task_execution" {
   name = "${var.project_name}-ecs-task-execution-role"
 
@@ -74,7 +67,7 @@ resource "aws_ecs_task_definition" "this" {
   container_definitions = jsonencode([
     {
       name      = var.project_name
-      image     = "${var.ecr_repository_url}:${var.image_tag}"
+      image     = "${var.ecr_repository_url}@${var.image_digest}"
       essential = true
       portMappings = [
         {
@@ -102,19 +95,16 @@ resource "aws_ecs_service" "this" {
   launch_type     = "FARGATE"
 
   network_configuration {
-    subnets          = var.public_subnet_ids
+    subnets          = var.private_subnet_ids
     security_groups  = [aws_security_group.ecs_task.id]
-    assign_public_ip = true # needed to pull the image from ECR — no NAT gateway in this setup
+    assign_public_ip = false # in a private subnet now — reaches ECR via the NAT Gateway
   }
 
   load_balancer {
     target_group_arn = var.target_group_arn
-    container_name    = var.project_name
-    container_port    = var.container_port
+    container_name   = var.project_name
+    container_port   = var.container_port
   }
 
-  # Wait for the HTTPS listener to exist before starting the service —
-  # avoids a race where ECS registers with a target group that has no
-  # working listener yet.
   depends_on = [var.https_listener_arn]
 }

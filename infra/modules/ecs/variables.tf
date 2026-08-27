@@ -10,7 +10,7 @@ variable "vpc_id" {
   type = string
 }
 
-variable "public_subnet_ids" {
+variable "private_subnet_ids" {
   type = list(string)
 }
 
@@ -22,7 +22,7 @@ variable "ecr_repository_url" {
   type = string
 }
 
-variable "image_tag" {
+variable "image_digest" {
   type = string
 }
 
