@@ -1,7 +1,14 @@
-# modules/acm/main.tf
+terraform {
+  required_version = ">= 1.11.0"
 
-# Looks up the hosted zone that already exists from registering the
-# domain in Route 53 — we're not creating the zone, just referencing it.
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 5.0"
+    }
+  }
+}
+
 data "aws_route53_zone" "this" {
   name = var.domain_name
 }
