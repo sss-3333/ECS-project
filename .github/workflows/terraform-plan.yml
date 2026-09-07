@@ -53,7 +53,7 @@ jobs:
           tflint --recursive
 
       - name: Terraform plan
-        run: terraform plan -var="image_tag=${{ github.sha }}" -no-color
+        run: terraform plan -no-color
         continue-on-error: false
 
       - name: Job summary
