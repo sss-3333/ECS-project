@@ -8,20 +8,17 @@ module "vpc" {
   availability_zones   = var.availability_zones
 }
 
-module "ecr" {
-  source = "./modules/ecr"
-
-  repository_name = var.project_name
+# ECR repository itself is managed in bootstrap/ — rarely torn down,
+# same reasoning as the OIDC setup. This just reads its details.
+data "aws_ecr_repository" "this" {
+  name = var.project_name
 }
 
 # Always resolves to whatever was most recently pushed to ECR — no
-# manual tag to type or keep in sync, locally or in CI. Depends on
-# module.ecr existing first.
+# manual tag to type or keep in sync, locally or in CI.
 data "aws_ecr_image" "latest" {
   repository_name = var.project_name
   most_recent     = true
-
-  depends_on = [module.ecr]
 }
 
 module "acm" {
@@ -49,7 +46,7 @@ module "ecs" {
   vpc_id                = module.vpc.vpc_id
   private_subnet_ids    = module.vpc.private_subnet_ids
   container_port        = var.container_port
-  ecr_repository_url    = module.ecr.repository_url
+  ecr_repository_url    = data.aws_ecr_repository.this.repository_url
   image_digest          = data.aws_ecr_image.latest.image_digest
   target_group_arn      = module.alb.target_group_arn
   alb_security_group_id = module.alb.alb_security_group_id
@@ -67,5 +64,3 @@ resource "aws_route53_record" "app" {
     evaluate_target_health = true
   }
 }
-
-# Trigger a Terraform Plan run for PR review demo

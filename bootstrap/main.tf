@@ -207,3 +207,9 @@ resource "aws_iam_role_policy" "github_actions" {
     ]
   })
 }
+
+module "ecr" {
+  source = "./modules/ecr"
+
+  repository_name = var.project_name
+}

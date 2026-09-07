@@ -244,7 +244,7 @@ terraform destroy
   trust policy, the exact same `AssumeRoleWithWebIdentity` error persisted.
   The actual cause was `configure-aws-credentials@v4` attaching session tags
   by default, which needs `sts:TagSession` — a completely different
-  permission than the error message implied.
+  permission than th e error message implied.
 - **Least-privilege IAM is genuinely hard to get right on paper.** Every
   Terraform action needs read permissions during `plan`'s state refresh, not
   just the create/update/delete actions you'd expect. I ended up testing the
