@@ -9,12 +9,7 @@ pipeline behind it.
 
 ## Live Demo
 
-<!-- Paste the GitHub-generated video URL below on its own line — it
-     renders as a playable inline video automatically. Record via the
-     GitHub web editor's drag-and-drop upload (see repo docs), don't
-     just paste a local file path. -->
-
-<!-- https://github.com/user-attachments/assets/PASTE-YOUR-VIDEO-ID-HERE -->
+https://github.com/user-attachments/assets/da105d6b-e109-46f8-8c75-c2a29af07577
 
 ---
 
