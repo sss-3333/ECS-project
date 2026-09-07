@@ -1,4 +1,4 @@
-# Trackance — Client Project Status Tracker
+# Trackance - Client Project Status Tracker
 
 A lightweight project status tracker for freelancers and small teams,
 containerised with Docker, deployed to AWS ECS Fargate, and provisioned
@@ -17,12 +17,11 @@ I built this project specifically to take something from a manual, click-through
 AWS setup through to a fully automated, infrastructure-as-code deployment end-to-end.
 
 The app itself is a client project tracker built for freelancers or small teams.
-It's deliberately minimal: no accounts, no database,
-one shared list — just enough to be real, without adding complexity that
-would compete with the actual point of the build, which was the
-infrastructure and pipeline around it.
+It's deliberately minimal: no accounts, no database, one shared list, just 
+enough to be real, without adding complexity that would compete with the actual
+point of the build, which was the infrastructure and pipeline around it.
 
-**Stack:** Node.js / Express backend, vanilla HTML/CSS/JS frontend, file-based
+**Stack:** Node.js / Express backend, HTML/CSS/JS frontend, file-based
 storage. Docker (multi-stage, distroless, non-root). Terraform. AWS (ECS
 Fargate, ALB, ACM, Route 53, ECR, VPC). GitHub Actions with OIDC.
 
@@ -46,45 +45,43 @@ Fargate, ALB, ACM, Route 53, ECR, VPC). GitHub Actions with OIDC.
 
 ![Architecture diagram](/screenshots/ECS-Architecture-Diagram.png)
 
-**How it all fits together:** a request starts with a DNS lookup against
-Route 53, resolving `app.trackance.co.uk` to the Application Load Balancer.
-The real traffic then enters through the Internet Gateway and hits the ALB,
-which sits across two public subnets (required for the ALB to function) and
-handles the HTTP→HTTPS redirect using a certificate issued and validated
-through ACM. From there, traffic goes through a target group to the ECS
-Fargate task, which runs inside a private subnet with no direct route from
-the internet at all — the only way in is through the ALB. The task itself
-ships its logs to CloudWatch and pulls its container image from ECR. Since
-the task has no direct internet route, its outbound connections (pulling that
-image, DNS lookups) go out through a NAT Gateway sitting in one of the public
-subnets, which is the one thing giving a private-subnet resource a way out
-without ever being reachable from the outside.
+Solid arrows = real traffic (what a user's request or the task's own outbound connection actually travels through)
+Dashed arrows = configuration, permissions, or deployment relationships - nothing flows continuously through these
 
-Separately, GitHub Actions handles the deployment side: it authenticates to
-AWS using OIDC (no stored AWS keys), pushes built images to ECR, and runs
-Terraform against this whole setup. The credentials for that OIDC connection
-live in their own, separate Terraform state (`bootstrap/`), so tearing down
-the application infrastructure can never accidentally remove the pipeline's
-own ability to authenticate. Terraform's own state and locking live in S3.
+**How it all fits together:**
+- A request starts with a DNS lookup against Route 53, resolving
+  `app.trackance.co.uk` to the Application Load Balancer
+- Real traffic enters through the Internet Gateway and hits the ALB, which
+  sits across two public subnets (required for the ALB to function) and
+  handles the HTTP→HTTPS redirect using a certificate issued and validated
+  through ACM
+- From there, traffic goes through a target group to the ECS Fargate task,
+  which runs inside a private subnet with no direct route from the internet
+  at all - the only way in is through the ALB
+- The task ships its logs to CloudWatch and pulls its container image from
+  ECR
+- Since the task has no direct internet route, its outbound connections
+  (pulling that image, DNS lookups) go out through a NAT Gateway sitting in
+  one of the public subnets - the one thing giving a private-subnet resource
+  a way out without ever being reachable from the outside
+- Separately, GitHub Actions handles deployment: it authenticates to AWS
+  using OIDC (no stored AWS keys), pushes built images to ECR, and runs
+  Terraform against this whole setup
+- The credentials for that OIDC connection live in their own, separate
+  Terraform state (`bootstrap/`), so tearing down the application
+  infrastructure can never accidentally remove the pipeline's own ability
+  to authenticate
+- Terraform's own state and locking live in S3
 
 A few specific decisions worth explaining:
 
-- **No database, so no private subnets originally.** Private subnets mainly
-  exist to isolate something sensitive — usually a database — from direct
-  internet access. This app stores its data in a file inside the container,
-  so there was nothing that strictly needed hiding. After a review
-  conversation, I moved the ECS task into private subnets anyway, since
-  relying on a security group as the *only* barrier is a single point of
-  failure — a private subnet removes the network path entirely, as a second,
-  independent layer of protection. A NAT Gateway was added specifically to
-  give the now-private task outbound access (pulling images from ECR, DNS).
 - **One shared NAT Gateway, not one per AZ.** A per-AZ setup is more resilient
   but roughly doubles the cost for redundancy this project doesn't need at
   its current scale.
-- **No autoscaling.** Fixed at one task — this is a portfolio deployment, not
+- **No autoscaling.** Fixed at one task - this is a portfolio deployment, not
   expecting real production traffic.
 - **ECR images are immutable.** Once a tag is pushed, it can never be
-  reassigned to a different image — every deployment is traceable back to an
+  reassigned to a different image meaning every deployment is traceable back to an
   exact, unchangeable build. The ECS task pulls by **digest**, not tag, so
   Terraform always deploys whatever was most recently pushed without needing
   a manually-maintained variable.
@@ -93,10 +90,8 @@ A few specific decisions worth explaining:
   `Terraform Destroy` on the app infrastructure can never accidentally remove
   the very credentials the pipeline needs to authenticate and rebuild it.
 - **The GitHub Actions IAM role uses a hand-built least-privilege policy**,
-  not `AdministratorAccess` — enumerated actions, resource ARNs scoped
-  wherever AWS supports it. I tested it directly by locally assuming the
-  actual role and running `terraform plan` against it until it came back
-  clean with zero access errors, rather than trusting it on paper.
+  not `AdministratorAccess` - enumerated actions, resource ARNs scoped
+  wherever AWS supports it.
 
 Manual AWS setup (ClickOps) evidence and screenshots, from before this was
 rebuilt in Terraform, are kept in [`/clickops`](./clickops).
@@ -168,6 +163,18 @@ anywhere in the repo or GitHub secrets.
 
 ## Local Setup
 
+**Prerequisites:**
+- AWS account, Terraform, AWS CLI (configured via `aws configure`), Docker, Node.js
+- A domain you own, hosted in Route 53 — ACM and Route 53 both require real ownership
+- A unique S3 bucket name in mind — bucket names are global across all of AWS, so `trackance-tfstate-sss3333` can't be reused as-is
+Wherever the steps below reference my domain, bucket name, or GitHub repo, substitute your own — `domain_name` in `infra/variables.tf` and `github_org`/`github_repo` in `bootstrap/variables.tf` default to mine.
+ 
+**Clone the repo:**
+```bash
+git clone https://github.com/sss-3333/ECS-project.git
+cd ECS-project
+```
+
 **Run the app directly:**
 ```bash
 cd app
@@ -175,61 +182,63 @@ npm install
 npm start
 # visit http://localhost:3000
 ```
-
+ 
 **Run it containerised (matches production):**
 ```bash
 docker build -t tracker-app .
 docker run -p 80:3000 tracker-app
 # visit http://localhost
 ```
-
+ 
 **Reproduce the infrastructure:**
 ```bash
 # One-time: create the S3 bucket Terraform will store its state in.
-# Terraform can't create this itself, since it needs it to already
-# exist before it can even start. Via AWS CLI or Console — block all
-# public access, enable versioning, enable encryption.
 aws s3api create-bucket --bucket <your-bucket-name> --region eu-west-2 \
   --create-bucket-configuration LocationConstraint=eu-west-2
 aws s3api put-bucket-versioning --bucket <your-bucket-name> \
   --versioning-configuration Status=Enabled
-
+ 
 # One-time: create the ECR repo before anything else exists
 ./bootstrap-ecr.sh
-
+ 
+# Authenticate Docker to your new ECR repo
+aws ecr get-login-password --region eu-west-2 | docker login --username AWS --password-stdin <your-account-id>.dkr.ecr.eu-west-2.amazonaws.com
+ 
+# Build, tag, and push an image — Terraform needs at least one image
+# in the repo before it can deploy anything
+docker build -t tracker-app .
+docker tag tracker-app:latest <your-account-id>.dkr.ecr.eu-west-2.amazonaws.com/ecs-project-tracker:latest
+docker push <your-account-id>.dkr.ecr.eu-west-2.amazonaws.com/ecs-project-tracker:latest
+ 
 # One-time: OIDC provider + IAM role (needs your own AWS credentials)
 cd bootstrap
 terraform init
 terraform apply
-
+ 
 # Application infrastructure
 cd ../infra
 terraform init
 terraform plan
 terraform apply
 ```
-
+ 
 **Tearing it down:**
 ```bash
 cd infra
 terraform destroy
 ```
-`bootstrap/` is deliberately left alone here — it's a separate state on
-purpose, so a destroy of the application infrastructure can never remove the
-pipeline's own ability to authenticate and rebuild it. Only destroy
-`bootstrap/` separately if you want to remove the OIDC setup entirely.
 
 ---
 
 ## Challenges & What I Learned
 
-- **GitHub's OIDC token format changed underneath the standard trust policy
-  pattern.** Every tutorial (and AWS's own docs) show a `sub` condition like
+- **GitHub's OIDC token format changed underneath the standard trust policy pattern.**
+   Every tutorial (and AWS's own docs) show a `sub` condition like
   `repo:org/repo:*`. My trust policy matched that exactly and still failed
   `AssumeRoleWithWebIdentity`. Decoding the actual token GitHub was sending
   showed why: it now includes immutable owner/repo IDs
   (`repo:org@id/repo@id:...`), not just the plain names. I fixed it with a
-  wildcarded pattern that matches both forms — but only after choosing to
+  wildcarded pattern that matches both forms - but only after choosing to
   verify the real token rather than trust the documented format.
 - **A generic error hid the real missing permission.** After fixing the
   trust policy, the exact same `AssumeRoleWithWebIdentity` error persisted.
@@ -258,6 +267,7 @@ pipeline's own ability to authenticate and rebuild it. Only destroy
   included, despite existing in source and in the build stage.
 
 ---
+## Features To Add Later
 
 - User accounts, so multiple freelancers could each keep a private list
   rather than one shared one
