@@ -9,25 +9,14 @@ pipeline behind it.
 
 ## Live Demo
 
-<!-- Paste the GitHub-generated video URL below on its own line — it
-     renders as a playable inline video automatically. Record via the
-     GitHub web editor's drag-and-drop upload (see repo docs), don't
-     just paste a local file path. -->
-
-<!-- https://github.com/user-attachments/assets/PASTE-YOUR-VIDEO-ID-HERE -->
-
----
 
 ## Overview
 
-I wanted to properly learn how to take something from a manual, click-through
-AWS setup through to a fully automated, infrastructure-as-code deployment —
-so I built this project specifically to do that end-to-end, rather than just
-following a tutorial.
+I built this project specifically to take something from a manual, click-through
+AWS setup through to a fully automated, infrastructure-as-code deployment end-to-end.
 
-The app itself is a small client project tracker — keeping tabs on multiple
-client projects at different stages is a genuine problem freelancers deal
-with, myself included. It's deliberately minimal: no accounts, no database,
+The app itself is a client project tracker built for freelancers or small teams.
+It's deliberately minimal: no accounts, no database,
 one shared list — just enough to be real, without adding complexity that
 would compete with the actual point of the build, which was the
 infrastructure and pipeline around it.
@@ -35,8 +24,6 @@ infrastructure and pipeline around it.
 **Stack:** Node.js / Express backend, vanilla HTML/CSS/JS frontend, file-based
 storage. Docker (multi-stage, distroless, non-root). Terraform. AWS (ECS
 Fargate, ALB, ACM, Route 53, ECR, VPC). GitHub Actions with OIDC.
-
----
 
 ---
 
@@ -56,7 +43,7 @@ Fargate, ALB, ACM, Route 53, ECR, VPC). GitHub Actions with OIDC.
 
 ## Architecture
 
-![Architecture diagram](docs/architecture-diagram.png)
+![Architecture diagram](/screenshots/ECS-Architecture-Diagram.png)
 
 **How it all fits together:** a request starts with a DNS lookup against
 Route 53, resolving `app.trackance.co.uk` to the Application Load Balancer.
@@ -79,7 +66,7 @@ live in their own, separate Terraform state (`bootstrap/`), so tearing down
 the application infrastructure can never accidentally remove the pipeline's
 own ability to authenticate. Terraform's own state and locking live in S3.
 
-A few specific decisions worth explaining rather than leaving unexplained:
+A few specific decisions worth explaining:
 
 - **No database, so no private subnets originally.** Private subnets mainly
   exist to isolate something sensitive — usually a database — from direct
@@ -171,7 +158,10 @@ Four pipelines, each with a single responsibility:
 All four authenticate to AWS via GitHub OIDC — no long-lived AWS keys stored
 anywhere in the repo or GitHub secrets.
 
-*(Pipeline run screenshots below)*
+![Build and Push](/screenshots/build-and-push.png)
+![Terraform Plan](/screenshots/tf-plan.png)
+![Terraform Deploy](/screenshots/tf-deploy.png)
+![Terraform Destroy](/screenshots/tf-destroy.png)
 
 ---
 
@@ -267,8 +257,6 @@ pipeline's own ability to authenticate and rebuild it. Only destroy
   included, despite existing in source and in the build stage.
 
 ---
-
-
 
 - User accounts, so multiple freelancers could each keep a private list
   rather than one shared one
