@@ -67,3 +67,5 @@ resource "aws_route53_record" "app" {
     evaluate_target_health = true
   }
 }
+
+# Trigger a Terraform Plan run for PR review demo
