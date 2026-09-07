@@ -116,7 +116,6 @@ ECS-project/
 │   ├── provider.tf
 │   └── modules/
 │       ├── vpc/                # VPC, public + private subnets, IGW, NAT
-│       ├── ecr/                # Image repo, immutable tags
 │       ├── acm/                # Certificate, DNS validation
 │       ├── alb/                # Load balancer, target group, listeners
 │       └── ecs/                # Cluster, task definition, service
@@ -125,6 +124,8 @@ ECS-project/
 │   ├── variables.tf
 │   ├── provider.tf
 │   └── outputs.tf
+│   └── modules/
+│       └── ecr/                # Image repo, immutable 
 ├── clickops/                   # Manual AWS setup evidence (pre-Terraform)
 ├── .github/workflows/          # CI/CD pipelines
 │   ├── app-deploy.yml
