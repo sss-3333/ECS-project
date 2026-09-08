@@ -40,7 +40,7 @@ jobs:
         run: terraform init
 
       - name: Terraform destroy
-        run: terraform destroy -auto-approve -var="image_tag=placeholder"
+        run: terraform destroy -auto-approve
 
       - name: Job summary
         run: echo "### Infrastructure destroyed" >> $GITHUB_STEP_SUMMARY
