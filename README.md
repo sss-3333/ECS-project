@@ -29,17 +29,17 @@ Fargate, ALB, ACM, Route 53, ECR, VPC). GitHub Actions with OIDC.
 
 ## AWS Components
 
-- **ECS Fargate** — runs the app as a serverless container, no EC2 to manage
-- **Application Load Balancer** — terminates HTTPS, redirects HTTP, routes to the target group
-- **VPC** — 2 Availability Zones; public subnets hold the ALB and NAT Gateway, private subnets hold the ECS task
-- **Internet Gateway** — internet access for the public subnets
-- **NAT Gateway** — outbound-only internet access for the private-subnet task (single, shared across both AZs)
-- **Route 53** — hosted zone and record for the custom domain
-- **ACM** — TLS certificate, DNS-validated
-- **ECR** — private image registry, immutable tags
-- **CloudWatch Logs** — centralised logs from the ECS task
-- **IAM** — OIDC-based least-privilege role for the pipelines, plus a task execution role for ECS
-- **S3** — Terraform state, with native locking
+- **ECS Fargate** - runs the app as a serverless container, no EC2 to manage
+- **Application Load Balancer** - terminates HTTPS, redirects HTTP, routes to the target group
+- **VPC** - 2 Availability Zones; public subnets hold the ALB and NAT Gateway, private subnets hold the ECS task
+- **Internet Gateway** - internet access for the public subnets
+- **NAT Gateway** - outbound-only internet access for the private-subnet task (single, shared across both AZs)
+- **Route 53** - hosted zone and record for the custom domain
+- **ACM** - TLS certificate, DNS-validated
+- **ECR** - private image registry, immutable tags
+- **CloudWatch Logs** - centralised logs from the ECS task
+- **IAM** - OIDC-based least-privilege role for the pipelines, plus a task execution role for ECS
+- **S3** - Terraform state, with native locking
 
 ## Architecture
 
@@ -149,7 +149,7 @@ Four pipelines, each with a single responsibility:
 | **Terraform Deploy** | After Build and Push succeeds, push to `infra/`, or manual | `plan` + `apply`, then a post-deploy health check against `/health` |
 | **Terraform Destroy** | Manual only, requires typing `destroy` to confirm | Tears down the application infrastructure |
 
-All four authenticate to AWS via GitHub OIDC — no long-lived AWS keys stored
+All four authenticate to AWS via GitHub OIDC - no long-lived AWS keys stored
 anywhere in the repo or GitHub secrets.
 
 ![Build and Push](/screenshots/build-and-push.png)
@@ -163,9 +163,8 @@ anywhere in the repo or GitHub secrets.
 
 **Prerequisites:**
 - AWS account, Terraform, AWS CLI (configured via `aws configure`), Docker, Node.js
-- A domain you own, hosted in Route 53 — ACM and Route 53 both require real ownership
-- A unique S3 bucket name in mind — bucket names are global across all of AWS, so `trackance-tfstate-sss3333` can't be reused as-is
-Wherever the steps below reference my domain, bucket name, or GitHub repo, substitute your own — `domain_name` in `infra/variables.tf` and `github_org`/`github_repo` in `bootstrap/variables.tf` default to mine.
+- A domain you own, hosted in Route 53 - ACM and Route 53 both require real ownership
+- A unique S3 bucket name
  
 **Clone the repo:**
 ```bash
@@ -245,7 +244,7 @@ terraform destroy
   just the create/update/delete actions you'd expect. I ended up testing the
   actual policy by locally assuming the real IAM role and iterating against
   real `AccessDenied` errors until `terraform plan` came back completely
-  clean — a slower process than guessing, but the only way to be sure it was
+  clean - a slower process than guessing, but the only way to be sure it was
   actually correct rather than just plausible.
 - **A stale local variable silently rolled the app backward, three times.**
   Running `terraform plan` locally without passing the current image tag
