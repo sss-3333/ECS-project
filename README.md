@@ -85,7 +85,7 @@ A few specific decisions worth explaining:
   exact, unchangeable build. The ECS task pulls by **digest**, not tag, so
   Terraform always deploys whatever was most recently pushed without needing
   a manually-maintained variable.
-- **GitHub OIDC authentication lives in its own `bootstrap/` Terraform state**,
+- **GitHub OIDC authentication and the ECR repository both live in their own `bootstrap/` Terraform state**,
   separate from the application infrastructure in `infra/`. This means a
   `Terraform Destroy` on the app infrastructure can never accidentally remove
   the very credentials the pipeline needs to authenticate and rebuild it.
@@ -102,32 +102,32 @@ rebuilt in Terraform, are kept in [`/clickops`](./clickops).
 
 ```
 ECS-project/
-├── app/                        # Application source
+├── app/                        
 │   ├── server.js
 │   ├── store.js
 │   ├── data.json
 │   ├── package.json
 │   └── public/
-│       └── index.html          # Frontend
-├── infra/                      # Application Terraform (own state)
+│       └── index.html          
+├── infra/                      
 │   ├── main.tf
 │   ├── variables.tf
 │   ├── outputs.tf
 │   ├── provider.tf
 │   └── modules/
-│       ├── vpc/                # VPC, public + private subnets, IGW, NAT
-│       ├── acm/                # Certificate, DNS validation
-│       ├── alb/                # Load balancer, target group, listeners
-│       └── ecs/                # Cluster, task definition, service
-├── bootstrap/                  # GitHub OIDC + IAM (separate Terraform state)
+│       ├── vpc/                
+│       ├── acm/                
+│       ├── alb/                
+│       └── ecs/               
+├── bootstrap/                  
 │   ├── main.tf
 │   ├── variables.tf
 │   ├── provider.tf
 │   └── outputs.tf
 │   └── modules/
-│       └── ecr/                # Image repo, immutable 
-├── clickops/                   # Manual AWS setup evidence (pre-Terraform)
-├── .github/workflows/          # CI/CD pipelines
+│       └── ecr/                
+├── clickops/                   
+├── .github/workflows/          
 │   ├── app-deploy.yml
 │   ├── terraform-plan.yml
 │   ├── terraform-deploy.yml
