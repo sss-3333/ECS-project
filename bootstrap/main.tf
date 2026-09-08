@@ -90,6 +90,7 @@ resource "aws_iam_role_policy" "github_actions" {
           "ec2:AuthorizeSecurityGroupEgress", "ec2:RevokeSecurityGroupEgress",
           "ec2:CreateTags", "ec2:DeleteTags",
           "ec2:AllocateAddress", "ec2:ReleaseAddress",
+          "ec2:AssociateAddress", "ec2:DisassociateAddress",
           "ec2:CreateNatGateway", "ec2:DeleteNatGateway"
         ]
         Resource = "*"

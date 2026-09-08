@@ -138,8 +138,6 @@ ECS-project/
 └── README.md
 ```
 
----
-
 ## CI/CD Pipelines
 
 Four pipelines, each with a single responsibility:
