@@ -199,25 +199,22 @@ aws s3api create-bucket --bucket <your-bucket-name> --region eu-west-2 \
 aws s3api put-bucket-versioning --bucket <your-bucket-name> \
   --versioning-configuration Status=Enabled
  
-# One-time: create the ECR repo before anything else exists
-./bootstrap-ecr.sh
- 
-# Authenticate Docker to your new ECR repo
-aws ecr get-login-password --region eu-west-2 | docker login --username AWS --password-stdin <your-account-id>.dkr.ecr.eu-west-2.amazonaws.com
- 
-# Build, tag, and push an image — Terraform needs at least one image
-# in the repo before it can deploy anything
-docker build -t tracker-app .
-docker tag tracker-app:latest <your-account-id>.dkr.ecr.eu-west-2.amazonaws.com/ecs-project-tracker:latest
-docker push <your-account-id>.dkr.ecr.eu-west-2.amazonaws.com/ecs-project-tracker:latest
- 
-# One-time: OIDC provider + IAM role (needs your own AWS credentials)
+# One-time: OIDC provider, IAM role, AND the ECR repo — all created here
 cd bootstrap
 terraform init
 terraform apply
  
+# Authenticate Docker to the ECR repo bootstrap/ just created
+aws ecr get-login-password --region eu-west-2 | docker login --username AWS --password-stdin <your-account-id>.dkr.ecr.eu-west-2.amazonaws.com
+ 
+# Build, tag, and push an image
+cd ..
+docker build -t tracker-app .
+docker tag tracker-app:latest <your-account-id>.dkr.ecr.eu-west-2.amazonaws.com/ecs-project-tracker:latest
+docker push <your-account-id>.dkr.ecr.eu-west-2.amazonaws.com/ecs-project-tracker:latest
+ 
 # Application infrastructure
-cd ../infra
+cd infra
 terraform init
 terraform plan
 terraform apply
