@@ -135,7 +135,6 @@ ECS-project/
 ├── Dockerfile
 ├── .dockerignore
 ├── .gitignore
-├── bootstrap-ecr.sh             # One-time ECR bootstrap script
 └── README.md
 ```
 
